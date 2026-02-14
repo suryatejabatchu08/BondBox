@@ -105,7 +105,7 @@ async def room_websocket(
     - Presence (join/leave/heartbeat)
     - Typing indicators
     """
-    await manager.connect(room_id, user_id, websocket)
+    await manager.connect(room_id, user_id, display_name, websocket)
 
     # Register presence in Redis
     online_users = await presence_service.join_room(room_id, user_id, display_name)
@@ -135,6 +135,14 @@ async def room_websocket(
                             "candidate": message.get("candidate"),
                         },
                     )
+
+            # --- Screen Share Notifications ---
+            elif msg_type in ("screen-share-start", "screen-share-stop"):
+                await manager.broadcast_to_room(
+                    room_id,
+                    {"type": msg_type, "userId": user_id},
+                    exclude=user_id,
+                )
 
             # --- Canvas Events ---
             elif msg_type == "canvas-draw":
@@ -187,9 +195,9 @@ async def room_websocket(
                     exclude=user_id,
                 )
 
-            # --- Get current peers ---
+            # --- Get current peers (with display names) ---
             elif msg_type == "get-peers":
-                peers = manager.get_peers(room_id)
+                peers = manager.get_peers_with_names(room_id)
                 await manager.send_to_user(
                     room_id,
                     user_id,

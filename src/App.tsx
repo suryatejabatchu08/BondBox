@@ -11,6 +11,9 @@ import RoomPage from './features/rooms/RoomPage';
 import GamesPage from './features/games/GamesPage';
 import FriendsPage from './features/friends/FriendsPage';
 import AppreciationPage from './features/appreciation/AppreciationPage';
+import LeaderboardPage from './features/leaderboard/LeaderboardPage';
+import ActivityPage from './features/activity/ActivityPage';
+import RoomHistoryPage from './features/rooms/RoomHistoryPage';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -46,6 +49,9 @@ export default function App() {
               <Route path="/games" element={<GamesPage />} />
               <Route path="/friends" element={<FriendsPage />} />
               <Route path="/appreciation" element={<AppreciationPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/room-history" element={<RoomHistoryPage />} />
             </Route>
 
             {/* Fallback */}

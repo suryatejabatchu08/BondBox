@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuthStore } from '../../store/authStore';
 import MoodCheckModal from '../../features/mood/MoodCheckModal';
+import NotificationPanel from './NotificationPanel';
 import { Bell, Search, Smile } from 'lucide-react';
 
 const MOOD_MAP: Record<string, { emoji: string; color: string; bg: string }> = {
@@ -17,9 +18,15 @@ const MOOD_MAP: Record<string, { emoji: string; color: string; bg: string }> = {
 export default function AppLayout() {
     const [collapsed, setCollapsed] = useState(false);
     const [showMood, setShowMood] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const { profile } = useAuthStore();
 
     const mood = profile?.current_mood ? MOOD_MAP[profile.current_mood] : null;
+
+    const handleUnreadCountChange = useCallback((count: number) => {
+        setUnreadCount(count);
+    }, []);
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#0f0a1e' }}>
@@ -98,32 +105,60 @@ export default function AppLayout() {
                         </button>
 
                         {/* Notifications */}
-                        <button
-                            className="btn-icon"
-                            style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                border: '1px solid rgba(255,255,255,0.08)',
-                                borderRadius: 10,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                position: 'relative',
-                            }}
-                        >
-                            <Bell style={{ width: 18, height: 18, color: '#94a3b8' }} />
-                            <div
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                className="btn-icon"
+                                onClick={() => setShowNotifications(prev => !prev)}
                                 style={{
-                                    position: 'absolute',
-                                    top: -2,
-                                    right: -2,
-                                    width: 8,
-                                    height: 8,
-                                    borderRadius: '50%',
-                                    background: '#a855f7',
+                                    background: showNotifications
+                                        ? 'rgba(168, 85, 247, 0.15)'
+                                        : 'rgba(255,255,255,0.05)',
+                                    border: showNotifications
+                                        ? '1px solid rgba(168, 85, 247, 0.3)'
+                                        : '1px solid rgba(255,255,255,0.08)',
+                                    borderRadius: 10,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    position: 'relative',
                                 }}
+                            >
+                                <Bell style={{
+                                    width: 18,
+                                    height: 18,
+                                    color: showNotifications ? '#d8b4fe' : '#94a3b8',
+                                }} />
+                                {unreadCount > 0 && (
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            top: -4,
+                                            right: -4,
+                                            minWidth: 18,
+                                            height: 18,
+                                            borderRadius: 9,
+                                            background: '#a855f7',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: 10,
+                                            fontWeight: 700,
+                                            color: 'white',
+                                            padding: '0 4px',
+                                        }}
+                                    >
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </div>
+                                )}
+                            </button>
+
+                            <NotificationPanel
+                                isOpen={showNotifications}
+                                onClose={() => setShowNotifications(false)}
+                                onUnreadCountChange={handleUnreadCountChange}
                             />
-                        </button>
+                        </div>
                     </div>
                 </header>
 

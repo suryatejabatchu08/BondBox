@@ -55,20 +55,20 @@ export default function RoomPage() {
     const [isInCall, setIsInCall] = useState(false);
     const [isCanvasOpen, setIsCanvasOpen] = useState(false);
 
-    // WebRTC hook
-    const webrtc = useWebRTC({
-        roomId: id || '',
-        userId: profile?.id || '',
-        displayName: profile?.display_name || 'Anonymous',
-        enabled: isInCall,
-    });
-
-    // Canvas sync hook (also provides shared wsRef)
+    // Canvas sync hook (provides shared wsRef for all real-time features)
     const canvas = useCanvasSync(
         id || '',
         profile?.id || '',
         profile?.display_name || 'Anonymous'
     );
+
+    // WebRTC hook — shares the same WebSocket as canvas/presence
+    const webrtc = useWebRTC({
+        roomId: id || '',
+        userId: profile?.id || '',
+        displayName: profile?.display_name || 'Anonymous',
+        wsRef: canvas.wsRef,
+    });
 
     // Presence tracking (heartbeat + online users)
     const { onlineUsers } = usePresence({
@@ -332,6 +332,8 @@ export default function RoomPage() {
                                         remoteStreams={webrtc.remoteStreams}
                                         displayName={profile?.display_name || 'You'}
                                         isVideoEnabled={webrtc.isVideoEnabled}
+                                        screenStream={webrtc.screenStream}
+                                        isScreenSharing={webrtc.isScreenSharing}
                                     />
                                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                                         <VideoControls

@@ -6,13 +6,14 @@ import {
     Users,
     Gamepad2,
     Heart,
+    Trophy,
     BookOpen,
     LogOut,
     ChevronLeft,
     ChevronRight,
-    Bell,
     Coins,
     Zap,
+    History,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,6 +27,9 @@ const NAV_ITEMS = [
     { path: '/friends', icon: Users, label: 'Friends' },
     { path: '/games', icon: Gamepad2, label: 'Mini Games' },
     { path: '/appreciation', icon: Heart, label: 'Appreciation' },
+    { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
+    { path: '/activity', icon: Zap, label: 'XP History' },
+    { path: '/room-history', icon: History, label: 'Room History' },
 ];
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {

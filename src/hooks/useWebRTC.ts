@@ -1,7 +1,7 @@
 /**
  * useWebRTC - Custom hook for WebRTC video/audio/screen-sharing.
- * 
- * Uses the FastAPI WebSocket for signaling (offer/answer/ICE).
+ *
+ * Uses a SHARED WebSocket (from useCanvasSync) for signaling.
  * Manages peer connections, local/remote streams, and media controls.
  */
 
@@ -18,28 +18,43 @@ interface UseWebRTCOptions {
     roomId: string;
     userId: string;
     displayName: string;
-    enabled: boolean; // reserved for future auto-connect feature
+    wsRef: React.MutableRefObject<WebSocket | null>;
 }
 
-const ICE_SERVERS = [
+const ICE_SERVERS: RTCIceServer[] = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun.relay.metered.ca:80' },
+    {
+        urls: 'turn:global.relay.metered.ca:80',
+        username: 'e7e5e3e1a5e3d3c1b1a1',
+        credential: 'openrelayproject',
+    },
+    {
+        urls: 'turn:global.relay.metered.ca:443',
+        username: 'e7e5e3e1a5e3d3c1b1a1',
+        credential: 'openrelayproject',
+    },
+    {
+        urls: 'turn:global.relay.metered.ca:443?transport=tcp',
+        username: 'e7e5e3e1a5e3d3c1b1a1',
+        credential: 'openrelayproject',
+    },
 ];
 
-const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
-
-export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOptions) {
+export function useWebRTC({ userId, wsRef }: UseWebRTCOptions) {
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [remoteStreams, setRemoteStreams] = useState<PeerStream[]>([]);
     const [isAudioEnabled, setIsAudioEnabled] = useState(true);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
+    const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
 
-    const wsRef = useRef<WebSocket | null>(null);
     const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
     const localStreamRef = useRef<MediaStream | null>(null);
     const screenStreamRef = useRef<MediaStream | null>(null);
+    const isInCallRef = useRef(false);
 
     // Clean up a specific peer connection
     const cleanupPeer = useCallback((peerId: string) => {
@@ -53,6 +68,15 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
 
     // Create a new peer connection for a remote peer
     const createPeerConnection = useCallback((peerId: string, peerName: string) => {
+        // Don't create connection to self
+        if (peerId === userId) return undefined;
+
+        // Reuse existing connection
+        const existing = peerConnectionsRef.current.get(peerId);
+        if (existing && existing.connectionState !== 'closed' && existing.connectionState !== 'failed') {
+            return existing;
+        }
+
         const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
         // Add local tracks to the connection
@@ -65,6 +89,7 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
         // Handle incoming remote tracks
         pc.ontrack = (event) => {
             const [remoteStream] = event.streams;
+            if (!remoteStream) return;
             setRemoteStreams(prev => {
                 const exists = prev.find(s => s.userId === peerId);
                 if (exists) {
@@ -97,28 +122,65 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
 
         peerConnectionsRef.current.set(peerId, pc);
         return pc;
-    }, [cleanupPeer]);
+    }, [userId, wsRef, cleanupPeer]);
 
-    // Handle incoming WebSocket messages
-    const handleMessage = useCallback(async (event: MessageEvent) => {
-        const message = JSON.parse(event.data);
+    // Handle WebRTC-related WebSocket messages
+    const handleWsMessage = useCallback(async (event: MessageEvent) => {
+        if (!isInCallRef.current) return;
+
+        let message: any;
+        try {
+            message = JSON.parse(event.data);
+        } catch {
+            return;
+        }
 
         switch (message.type) {
+            case 'peers-list': {
+                // Response to get-peers: list of {userId, displayName}
+                const peers: { userId: string; displayName: string }[] = message.peers || [];
+                for (const peer of peers) {
+                    if (peer.userId !== userId && !peerConnectionsRef.current.has(peer.userId)) {
+                        const pc = createPeerConnection(peer.userId, peer.displayName);
+                        if (pc) {
+                            try {
+                                const offer = await pc.createOffer();
+                                await pc.setLocalDescription(offer);
+                                wsRef.current?.send(
+                                    JSON.stringify({
+                                        type: 'webrtc-offer',
+                                        targetUserId: peer.userId,
+                                        sdp: offer,
+                                    })
+                                );
+                            } catch (err) {
+                                console.error('Error creating offer for', peer.userId, err);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+
             case 'peer-joined': {
-                // New peer joined, create offers to all new peers
-                const peers: string[] = message.peers || [];
-                for (const peerId of peers) {
-                    if (peerId !== userId && !peerConnectionsRef.current.has(peerId)) {
-                        const pc = createPeerConnection(peerId, message.displayName || 'Peer');
-                        const offer = await pc.createOffer();
-                        await pc.setLocalDescription(offer);
-                        wsRef.current?.send(
-                            JSON.stringify({
-                                type: 'webrtc-offer',
-                                targetUserId: peerId,
-                                sdp: offer,
-                            })
-                        );
+                // A new peer joined the room — send them an offer
+                const peerId = message.userId;
+                if (peerId && peerId !== userId && !peerConnectionsRef.current.has(peerId)) {
+                    const pc = createPeerConnection(peerId, message.displayName || 'Peer');
+                    if (pc) {
+                        try {
+                            const offer = await pc.createOffer();
+                            await pc.setLocalDescription(offer);
+                            wsRef.current?.send(
+                                JSON.stringify({
+                                    type: 'webrtc-offer',
+                                    targetUserId: peerId,
+                                    sdp: offer,
+                                })
+                            );
+                        } catch (err) {
+                            console.error('Error creating offer for new peer', peerId, err);
+                        }
                     }
                 }
                 break;
@@ -126,27 +188,37 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
 
             case 'webrtc-offer': {
                 const peerId = message.userId;
+                if (!peerId || peerId === userId) break;
                 let pc = peerConnectionsRef.current.get(peerId);
                 if (!pc) {
                     pc = createPeerConnection(peerId, message.displayName || 'Peer');
                 }
-                await pc.setRemoteDescription(new RTCSessionDescription(message.sdp));
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-                wsRef.current?.send(
-                    JSON.stringify({
-                        type: 'webrtc-answer',
-                        targetUserId: peerId,
-                        sdp: answer,
-                    })
-                );
+                if (!pc) break;
+                try {
+                    await pc.setRemoteDescription(new RTCSessionDescription(message.sdp));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    wsRef.current?.send(
+                        JSON.stringify({
+                            type: 'webrtc-answer',
+                            targetUserId: peerId,
+                            sdp: answer,
+                        })
+                    );
+                } catch (err) {
+                    console.error('Error handling offer from', peerId, err);
+                }
                 break;
             }
 
             case 'webrtc-answer': {
                 const pc = peerConnectionsRef.current.get(message.userId);
                 if (pc) {
-                    await pc.setRemoteDescription(new RTCSessionDescription(message.sdp));
+                    try {
+                        await pc.setRemoteDescription(new RTCSessionDescription(message.sdp));
+                    } catch (err) {
+                        console.error('Error handling answer from', message.userId, err);
+                    }
                 }
                 break;
             }
@@ -154,7 +226,11 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
             case 'webrtc-ice': {
                 const pc = peerConnectionsRef.current.get(message.userId);
                 if (pc && message.candidate) {
-                    await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+                    } catch (err) {
+                        console.error('Error adding ICE candidate from', message.userId, err);
+                    }
                 }
                 break;
             }
@@ -163,10 +239,45 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
                 cleanupPeer(message.userId);
                 break;
             }
-        }
-    }, [userId, createPeerConnection, cleanupPeer]);
 
-    // Initialize media and connect
+            case 'screen-share-start': {
+                // A remote peer started screen sharing
+                setRemoteStreams(prev =>
+                    prev.map(s =>
+                        s.userId === message.userId
+                            ? { ...s, isScreenShare: true }
+                            : s
+                    )
+                );
+                break;
+            }
+
+            case 'screen-share-stop': {
+                // A remote peer stopped screen sharing
+                setRemoteStreams(prev =>
+                    prev.map(s =>
+                        s.userId === message.userId
+                            ? { ...s, isScreenShare: false }
+                            : s
+                    )
+                );
+                break;
+            }
+        }
+    }, [userId, createPeerConnection, cleanupPeer, wsRef]);
+
+    // Attach/detach the WebSocket message listener when in call
+    useEffect(() => {
+        const ws = wsRef.current;
+        if (!ws || !isConnected) return;
+
+        ws.addEventListener('message', handleWsMessage);
+        return () => {
+            ws.removeEventListener('message', handleWsMessage);
+        };
+    }, [wsRef.current, isConnected, handleWsMessage]);
+
+    // Initialize media and join the call
     const joinCall = useCallback(async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -175,19 +286,13 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
             });
             localStreamRef.current = stream;
             setLocalStream(stream);
+            isInCallRef.current = true;
+            setIsConnected(true);
 
-            // Connect WebSocket
-            const ws = new WebSocket(
-                `${WS_BASE}/ws/room/${roomId}?user_id=${userId}&display_name=${encodeURIComponent(displayName)}`
-            );
-            ws.onmessage = handleMessage;
-            ws.onopen = () => {
-                setIsConnected(true);
-                // Request current peers
-                ws.send(JSON.stringify({ type: 'get-peers' }));
-            };
-            ws.onclose = () => setIsConnected(false);
-            wsRef.current = ws;
+            // Request peer list from server to initiate connections
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({ type: 'get-peers' }));
+            }
         } catch (err) {
             console.error('Failed to get media devices:', err);
             // Try audio only if video fails
@@ -199,22 +304,22 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
                 localStreamRef.current = stream;
                 setLocalStream(stream);
                 setIsVideoEnabled(false);
+                isInCallRef.current = true;
+                setIsConnected(true);
 
-                const ws = new WebSocket(
-                    `${WS_BASE}/ws/room/${roomId}?user_id=${userId}&display_name=${encodeURIComponent(displayName)}`
-                );
-                ws.onmessage = handleMessage;
-                ws.onopen = () => setIsConnected(true);
-                ws.onclose = () => setIsConnected(false);
-                wsRef.current = ws;
+                if (wsRef.current?.readyState === WebSocket.OPEN) {
+                    wsRef.current.send(JSON.stringify({ type: 'get-peers' }));
+                }
             } catch (audioErr) {
                 console.error('Failed to get any media:', audioErr);
             }
         }
-    }, [roomId, userId, displayName, handleMessage]);
+    }, [wsRef]);
 
     // Leave call
     const leaveCall = useCallback(() => {
+        isInCallRef.current = false;
+
         // Close all peer connections
         peerConnectionsRef.current.forEach((pc) => pc.close());
         peerConnectionsRef.current.clear();
@@ -227,10 +332,6 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
         screenStreamRef.current = null;
         setLocalStream(null);
         setIsScreenSharing(false);
-
-        // Close WebSocket
-        wsRef.current?.close();
-        wsRef.current = null;
         setIsConnected(false);
     }, []);
 
@@ -260,6 +361,7 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
             // Stop screen share, revert to camera
             screenStreamRef.current?.getTracks().forEach(t => t.stop());
             screenStreamRef.current = null;
+            setScreenStream(null);
 
             if (localStreamRef.current) {
                 const videoTrack = localStreamRef.current.getVideoTracks()[0];
@@ -271,15 +373,21 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
                 }
             }
             setIsScreenSharing(false);
+
+            // Notify peers
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({ type: 'screen-share-stop' }));
+            }
         } else {
             try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                const newScreenStream = await navigator.mediaDevices.getDisplayMedia({
                     video: true,
                     audio: false,
                 });
-                screenStreamRef.current = screenStream;
+                screenStreamRef.current = newScreenStream;
+                setScreenStream(newScreenStream);
 
-                const screenTrack = screenStream.getVideoTracks()[0];
+                const screenTrack = newScreenStream.getVideoTracks()[0];
                 // Replace video track in all peer connections
                 peerConnectionsRef.current.forEach((pc) => {
                     const sender = pc.getSenders().find(s => s.track?.kind === 'video');
@@ -292,11 +400,16 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
                 };
 
                 setIsScreenSharing(true);
+
+                // Notify peers
+                if (wsRef.current?.readyState === WebSocket.OPEN) {
+                    wsRef.current.send(JSON.stringify({ type: 'screen-share-start' }));
+                }
             } catch (err) {
                 console.error('Screen share failed:', err);
             }
         }
-    }, [isScreenSharing]);
+    }, [isScreenSharing, wsRef]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -308,6 +421,7 @@ export function useWebRTC({ roomId, userId, displayName, enabled }: UseWebRTCOpt
     return {
         localStream,
         remoteStreams,
+        screenStream,
         isAudioEnabled,
         isVideoEnabled,
         isScreenSharing,
