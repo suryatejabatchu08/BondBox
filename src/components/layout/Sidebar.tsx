@@ -44,13 +44,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     return (
         <aside
             style={{
-                width: collapsed ? 72 : 260,
+                width: collapsed ? 68 : 240,
                 minHeight: '100vh',
-                background: 'rgba(15, 10, 30, 0.95)',
-                borderRight: '1px solid rgba(255,255,255,0.06)',
+                background: '#0c0c0e',
+                borderRight: '1px solid rgba(255,255,255,0.05)',
                 display: 'flex',
                 flexDirection: 'column',
-                transition: 'width 0.3s ease',
+                transition: 'width 0.25s ease',
                 position: 'fixed',
                 left: 0,
                 top: 0,
@@ -60,30 +60,30 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {/* Logo */}
             <div
                 style={{
-                    padding: collapsed ? '20px 16px' : '20px 20px',
+                    padding: collapsed ? '18px 14px' : '18px 18px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
-                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
                 }}
             >
                 <div
                     style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 12,
-                        background: 'linear-gradient(135deg, #a855f7, #f97316)',
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        background: '#6366f1',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
                     }}
                 >
-                    <BookOpen style={{ width: 20, height: 20, color: 'white' }} />
+                    <BookOpen style={{ width: 18, height: 18, color: 'white' }} />
                 </div>
                 {!collapsed && (
-                    <span style={{ fontSize: 20, fontWeight: 800, color: 'white' }}>
-                        Bond<span style={{ color: '#a855f7' }}>Box</span>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.03em' }}>
+                        Bond<span style={{ color: '#818cf8' }}>Box</span>
                     </span>
                 )}
             </div>
@@ -92,12 +92,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {profile && (
                 <div
                     style={{
-                        padding: collapsed ? '16px 12px' : '16px 20px',
-                        borderBottom: '1px solid rgba(255,255,255,0.06)',
+                        padding: collapsed ? '14px 10px' : '14px 18px',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div className="avatar avatar-placeholder" style={{ flexShrink: 0 }}>
+                        <div className="avatar avatar-placeholder" style={{ flexShrink: 0, width: 34, height: 34, fontSize: 14 }}>
                             {profile.avatar_url ? (
                                 <img src={profile.avatar_url} alt={profile.display_name} />
                             ) : (
@@ -108,9 +108,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                             <div style={{ overflow: 'hidden' }}>
                                 <p
                                     style={{
-                                        fontSize: 14,
+                                        fontSize: 13,
                                         fontWeight: 600,
-                                        color: 'white',
+                                        color: '#e4e4e7',
                                         whiteSpace: 'nowrap',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
@@ -118,13 +118,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                                 >
                                     {profile.display_name}
                                 </p>
-                                <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                                    <span style={{ fontSize: 11, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 3 }}>
-                                        <Zap style={{ width: 11, height: 11, color: '#f97316' }} />
+                                <div style={{ display: 'flex', gap: 10, marginTop: 3 }}>
+                                    <span style={{ fontSize: 11, color: '#71717a', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                        <Zap style={{ width: 10, height: 10, color: '#6366f1' }} />
                                         {profile.xp} XP
                                     </span>
-                                    <span style={{ fontSize: 11, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 3 }}>
-                                        <Coins style={{ width: 11, height: 11, color: '#fbbf24' }} />
+                                    <span style={{ fontSize: 11, color: '#71717a', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                        <Coins style={{ width: 10, height: 10, color: '#a1a1aa' }} />
                                         {profile.room_coins}
                                     </span>
                                 </div>
@@ -135,7 +135,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             )}
 
             {/* Nav Items */}
-            <nav style={{ flex: 1, padding: '12px 8px' }}>
+            <nav style={{ flex: 1, padding: '10px 6px' }}>
                 {NAV_ITEMS.map(({ path, icon: Icon, label }) => (
                     <NavLink
                         key={path}
@@ -143,44 +143,45 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         style={({ isActive }) => ({
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 12,
-                            padding: collapsed ? '12px' : '10px 14px',
-                            borderRadius: 12,
-                            marginBottom: 4,
+                            gap: 10,
+                            padding: collapsed ? '10px' : '8px 12px',
+                            borderRadius: 8,
+                            marginBottom: 2,
                             textDecoration: 'none',
-                            color: isActive ? '#d8b4fe' : '#94a3b8',
-                            background: isActive ? 'rgba(168, 85, 247, 0.12)' : 'transparent',
-                            transition: 'all 0.2s ease',
+                            color: isActive ? '#e4e4e7' : '#71717a',
+                            background: isActive ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                            transition: 'all 0.15s ease',
                             justifyContent: collapsed ? 'center' : 'flex-start',
+                            fontSize: 13,
                         })}
                     >
-                        <Icon style={{ width: 20, height: 20, flexShrink: 0 }} />
-                        {!collapsed && <span style={{ fontSize: 14, fontWeight: 500 }}>{label}</span>}
+                        <Icon style={{ width: 18, height: 18, flexShrink: 0 }} />
+                        {!collapsed && <span style={{ fontWeight: 500 }}>{label}</span>}
                     </NavLink>
                 ))}
             </nav>
 
             {/* Bottom */}
-            <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ padding: '10px 6px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <button
                     onClick={handleSignOut}
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 12,
-                        padding: collapsed ? '12px' : '10px 14px',
-                        borderRadius: 12,
+                        gap: 10,
+                        padding: collapsed ? '10px' : '8px 12px',
+                        borderRadius: 8,
                         width: '100%',
                         border: 'none',
                         background: 'transparent',
-                        color: '#94a3b8',
+                        color: '#71717a',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease',
+                        transition: 'all 0.15s ease',
                         justifyContent: collapsed ? 'center' : 'flex-start',
-                        fontSize: 14,
+                        fontSize: 13,
                     }}
                 >
-                    <LogOut style={{ width: 20, height: 20 }} />
+                    <LogOut style={{ width: 18, height: 18 }} />
                     {!collapsed && 'Sign Out'}
                 </button>
 
@@ -190,17 +191,17 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: '8px',
-                        borderRadius: 10,
+                        padding: '7px',
+                        borderRadius: 8,
                         width: '100%',
                         border: 'none',
-                        background: 'rgba(255,255,255,0.04)',
-                        color: '#64748b',
+                        background: 'rgba(255,255,255,0.03)',
+                        color: '#52525b',
                         cursor: 'pointer',
                         marginTop: 4,
                     }}
                 >
-                    {collapsed ? <ChevronRight style={{ width: 18, height: 18 }} /> : <ChevronLeft style={{ width: 18, height: 18 }} />}
+                    {collapsed ? <ChevronRight style={{ width: 16, height: 16 }} /> : <ChevronLeft style={{ width: 16, height: 16 }} />}
                 </button>
             </div>
         </aside>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { BookOpen, Heart, Users, Sparkles, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import PixelSnow from '../../components/ui/PixelSnow';
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -80,7 +81,8 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="bg-gradient-animated" style={{ minHeight: '100vh', display: 'flex' }}>
+        <div className="bg-gradient-animated" style={{ minHeight: '100vh', display: 'flex', position: 'relative' }}>
+            <PixelSnow count={100} maxOpacity={0.12} speed={0.35} />
             {/* Left Side - Branding */}
             <div
                 style={{
@@ -99,7 +101,7 @@ export default function LoginPage() {
                                 width: 56,
                                 height: 56,
                                 borderRadius: 16,
-                                background: 'linear-gradient(135deg, #a855f7, #f97316)',
+                                background: '#6366f1',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -108,7 +110,7 @@ export default function LoginPage() {
                             <BookOpen style={{ width: 28, height: 28, color: 'white' }} />
                         </div>
                         <h1 style={{ fontSize: 36, fontWeight: 800, color: 'white' }}>
-                            Bond<span style={{ color: '#a855f7' }}>Box</span>
+                            Bond<span style={{ color: '#818cf8' }}>Box</span>
                         </h1>
                     </div>
 
@@ -126,16 +128,16 @@ export default function LoginPage() {
                         Grow Together.
                     </p>
 
-                    <p style={{ fontSize: 18, color: '#94a3b8', maxWidth: 500, lineHeight: 1.6, marginBottom: 40 }}>
+                    <p style={{ fontSize: 17, color: '#71717a', maxWidth: 480, lineHeight: 1.6, marginBottom: 40 }}>
                         A virtual study room where friends help each other learn, share moments of fun, and build meaningful
                         connections through collaborative learning.
                     </p>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         {[
-                            { icon: Users, text: 'Create study rooms with friends', color: '#a855f7' },
-                            { icon: Heart, text: 'Build friendship through learning', color: '#f97316' },
-                            { icon: Sparkles, text: 'Fun mini-games during breaks', color: '#10b981' },
+                            { icon: Users, text: 'Create study rooms with friends', color: '#6366f1' },
+                            { icon: Heart, text: 'Build friendship through learning', color: '#a1a1aa' },
+                            { icon: Sparkles, text: 'Fun mini-games during breaks', color: '#22c55e' },
                         ].map(({ icon: Icon, text, color }) => (
                             <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <div
@@ -151,7 +153,7 @@ export default function LoginPage() {
                                 >
                                     <Icon style={{ width: 18, height: 18, color }} />
                                 </div>
-                                <span style={{ color: '#cbd5e1', fontSize: 15 }}>{text}</span>
+                                <span style={{ color: '#a1a1aa', fontSize: 14 }}>{text}</span>
                             </div>
                         ))}
                     </div>
@@ -179,7 +181,7 @@ export default function LoginPage() {
                                 width: 48,
                                 height: 48,
                                 borderRadius: 14,
-                                background: 'linear-gradient(135deg, #a855f7, #f97316)',
+                                background: '#6366f1',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -189,14 +191,14 @@ export default function LoginPage() {
                             <BookOpen style={{ width: 24, height: 24, color: 'white' }} />
                         </div>
                         <h1 style={{ fontSize: 24, fontWeight: 800, color: 'white' }}>
-                            Bond<span style={{ color: '#a855f7' }}>Box</span>
+                            Bond<span style={{ color: '#818cf8' }}>Box</span>
                         </h1>
                     </div>
 
-                    <h2 style={{ fontSize: 24, fontWeight: 700, color: 'white', marginBottom: 4 }}>
+                    <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fafafa', marginBottom: 4 }}>
                         {isSignUp ? 'Create Account' : 'Welcome Back'}
                     </h2>
-                    <p style={{ fontSize: 14, color: '#94a3b8', marginBottom: 28 }}>
+                    <p style={{ fontSize: 13, color: '#71717a', marginBottom: 24 }}>
                         {isSignUp
                             ? 'Join BondBox and start studying with friends'
                             : 'Sign in to continue your study sessions'}
@@ -370,7 +372,7 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: '#94a3b8' }}>
+                    <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#71717a' }}>
                         {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                         <button
                             onClick={() => {
@@ -381,7 +383,7 @@ export default function LoginPage() {
                             style={{
                                 background: 'none',
                                 border: 'none',
-                                color: '#a855f7',
+                                color: '#818cf8',
                                 fontWeight: 600,
                                 cursor: 'pointer',
                             }}

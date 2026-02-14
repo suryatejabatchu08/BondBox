@@ -5,14 +5,15 @@ import { useAuthStore } from '../../store/authStore';
 import MoodCheckModal from '../../features/mood/MoodCheckModal';
 import NotificationPanel from './NotificationPanel';
 import { Bell, Search, Smile } from 'lucide-react';
+import PixelSnow from '../ui/PixelSnow';
 
 const MOOD_MAP: Record<string, { emoji: string; color: string; bg: string }> = {
-    motivated: { emoji: '🔥', color: '#f97316', bg: 'rgba(249, 115, 22, 0.15)' },
-    happy: { emoji: '😊', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
-    calm: { emoji: '🧘', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)' },
-    tired: { emoji: '😴', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.15)' },
-    stressed: { emoji: '😰', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' },
-    confused: { emoji: '🤔', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
+    motivated: { emoji: '🔥', color: '#e4e4e7', bg: 'rgba(255,255,255,0.06)' },
+    happy: { emoji: '😊', color: '#e4e4e7', bg: 'rgba(255,255,255,0.06)' },
+    calm: { emoji: '🧘', color: '#e4e4e7', bg: 'rgba(255,255,255,0.06)' },
+    tired: { emoji: '😴', color: '#a1a1aa', bg: 'rgba(255,255,255,0.04)' },
+    stressed: { emoji: '😰', color: '#a1a1aa', bg: 'rgba(255,255,255,0.04)' },
+    confused: { emoji: '🤔', color: '#a1a1aa', bg: 'rgba(255,255,255,0.04)' },
 };
 
 export default function AppLayout() {
@@ -29,14 +30,15 @@ export default function AppLayout() {
     }, []);
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', background: '#0f0a1e' }}>
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#09090b' }}>
+            <PixelSnow count={60} maxOpacity={0.08} speed={0.3} />
             <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
             <div
                 style={{
                     flex: 1,
-                    marginLeft: collapsed ? 72 : 260,
-                    transition: 'margin-left 0.3s ease',
+                    marginLeft: collapsed ? 68 : 240,
+                    transition: 'margin-left 0.25s ease',
                     display: 'flex',
                     flexDirection: 'column',
                 }}
@@ -44,53 +46,54 @@ export default function AppLayout() {
                 {/* Top Bar */}
                 <header
                     style={{
-                        height: 64,
-                        borderBottom: '1px solid rgba(255,255,255,0.06)',
+                        height: 56,
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0 28px',
-                        background: 'rgba(15, 10, 30, 0.8)',
-                        backdropFilter: 'blur(20px)',
+                        padding: '0 24px',
+                        background: 'rgba(9, 9, 11, 0.9)',
+                        backdropFilter: 'blur(16px)',
                         position: 'sticky',
                         top: 0,
                         zIndex: 30,
                     }}
                 >
                     {/* Search */}
-                    <div style={{ position: 'relative', maxWidth: 360 }}>
+                    <div style={{ position: 'relative', maxWidth: 320 }}>
                         <Search
                             style={{
                                 position: 'absolute',
-                                left: 12,
+                                left: 10,
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                width: 16,
-                                height: 16,
-                                color: '#64748b',
+                                width: 14,
+                                height: 14,
+                                color: '#52525b',
                             }}
                         />
                         <input
                             className="input"
                             placeholder="Search rooms, friends..."
-                            style={{ paddingLeft: 38, width: 320, fontSize: 13 }}
+                            style={{ paddingLeft: 32, width: 280, fontSize: 12, height: 34 }}
                         />
                     </div>
 
                     {/* Right actions */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         {/* Mood Indicator */}
                         <button
                             onClick={() => setShowMood(true)}
                             className="badge"
                             style={{
-                                background: mood?.bg || 'rgba(255,255,255,0.06)',
-                                color: mood?.color || '#94a3b8',
+                                background: mood?.bg || 'rgba(255,255,255,0.04)',
+                                color: mood?.color || '#71717a',
                                 border: 'none',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 4,
+                                fontSize: 12,
                             }}
                         >
                             {mood ? (
@@ -99,7 +102,7 @@ export default function AppLayout() {
                                 </>
                             ) : (
                                 <>
-                                    <Smile style={{ width: 14, height: 14 }} /> Set mood
+                                    <Smile style={{ width: 13, height: 13 }} /> Set mood
                                 </>
                             )}
                         </button>
@@ -111,12 +114,12 @@ export default function AppLayout() {
                                 onClick={() => setShowNotifications(prev => !prev)}
                                 style={{
                                     background: showNotifications
-                                        ? 'rgba(168, 85, 247, 0.15)'
-                                        : 'rgba(255,255,255,0.05)',
+                                        ? 'rgba(99, 102, 241, 0.1)'
+                                        : 'rgba(255,255,255,0.04)',
                                     border: showNotifications
-                                        ? '1px solid rgba(168, 85, 247, 0.3)'
-                                        : '1px solid rgba(255,255,255,0.08)',
-                                    borderRadius: 10,
+                                        ? '1px solid rgba(99, 102, 241, 0.2)'
+                                        : '1px solid rgba(255,255,255,0.06)',
+                                    borderRadius: 8,
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -125,27 +128,27 @@ export default function AppLayout() {
                                 }}
                             >
                                 <Bell style={{
-                                    width: 18,
-                                    height: 18,
-                                    color: showNotifications ? '#d8b4fe' : '#94a3b8',
+                                    width: 16,
+                                    height: 16,
+                                    color: showNotifications ? '#a5b4fc' : '#71717a',
                                 }} />
                                 {unreadCount > 0 && (
                                     <div
                                         style={{
                                             position: 'absolute',
-                                            top: -4,
-                                            right: -4,
-                                            minWidth: 18,
-                                            height: 18,
-                                            borderRadius: 9,
-                                            background: '#a855f7',
+                                            top: -3,
+                                            right: -3,
+                                            minWidth: 16,
+                                            height: 16,
+                                            borderRadius: 8,
+                                            background: '#6366f1',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            fontSize: 10,
-                                            fontWeight: 700,
+                                            fontSize: 9,
+                                            fontWeight: 600,
                                             color: 'white',
-                                            padding: '0 4px',
+                                            padding: '0 3px',
                                         }}
                                     >
                                         {unreadCount > 99 ? '99+' : unreadCount}
@@ -163,7 +166,7 @@ export default function AppLayout() {
                 </header>
 
                 {/* Content */}
-                <main style={{ flex: 1, padding: 28 }}>
+                <main style={{ flex: 1, padding: 24 }}>
                     <Outlet />
                 </main>
             </div>
