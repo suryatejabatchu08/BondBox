@@ -22,6 +22,11 @@ CORS_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
+# Add production frontend URL from env var
+_frontend_url = os.getenv("FRONTEND_URL", "")
+if _frontend_url:
+    CORS_ORIGINS.append(_frontend_url)
+
 if not SUPABASE_URL:
     print("⚠️  SUPABASE_URL is not set. Check your .env file.")
 if not UPSTASH_REDIS_REST_URL:
